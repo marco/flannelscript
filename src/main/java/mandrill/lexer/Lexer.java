@@ -33,7 +33,7 @@ public class Lexer {
     }
 
     public static void lexAndPrint(String input) {
-        System.out.println("Tokenizing: " + input));
+        System.out.println("Tokenizing: " + input);
         System.out.println(lex(input));
     }
 }
