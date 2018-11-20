@@ -70,7 +70,7 @@ void parse(): {} {
  * A class declaration.
  */
 void class_declaration(): {} {
-    type_name() <PUNCTUATOR_OPENING_ANGLE>
+    type_name_without_array() <PUNCTUATOR_OPENING_ANGLE>
     (
         variable_declaration()
     )*
@@ -101,7 +101,7 @@ void function_declaration(): {} {
  * order to make then accepted after statements like `return` and
  * `echo`.
  */
-void inside_function_action(): {} {
+void inside_function_action() #void: {} {
     LOOKAHEAD(2)
     variable_declaration()
 |   LOOKAHEAD(2)
@@ -139,8 +139,8 @@ void function_call(): {} {
  * A statement call (an `if` statement, a `while` statement, an `echo`
  * statement, or a `return `statement).
  */
-void statement_call(): {} {
-   if_statement()
+void statement_call() #void: {} {
+    if_statement()
 |   while_statement()
 |   echo_statement()
 |   return_statement()
@@ -149,8 +149,24 @@ void statement_call(): {} {
 /**
  * A name for a type.
  */
-void type_name(): { Token token; } {
+void type_name_without_array(): { Token token; } {
     token = <IDENTIFIER_CAPITALIZED>
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+}
+
+/**
+ * A name for a type. A separate function is necessary (instead of adding
+ * the suffix inline) so that the node can appear individually, instead
+ * of nested inside another `type` node, and so that this node, not a
+ * `type` node, holds the value.
+ */
+void type_name_with_array(): { Token token; } {
+    token = <IDENTIFIER_CAPITALIZED>
+    <PUNCTUATOR_OPENING_CURLY>
+    <PUNCTUATOR_CLOSING_CURLY>
 
     {
         jjtThis.setFilteredValueForToken(token);
@@ -160,21 +176,42 @@ void type_name(): { Token token; } {
 /**
  * A name for a type, along with an optional array syntax.
  */
-void type(): {} {
-    type_name() ("{}")?
+void type() #void: {} {
+    LOOKAHEAD(2)
+    type_name_with_array()
+|   type_name_without_array()
 }
 
 /**
  * A name for a public or private variable or function
  */
-void normal_name(): { Token token; } {
+void normal_name() #void: { Token token; } {
+    normal_name_lowercased()
+|   normal_name_underscore()
+}
+
+/**
+ * A name for a public variable or function. A separate function is
+ * necessary (instead of checking inline) so that the node can appear
+ * individually, instead of nested inside another `normal_name` node,
+ * and so that this node, not a `normal_name` node, holds the value.
+ */
+void normal_name_lowercased(): { Token token; } {
     token = <IDENTIFIER_LOWERCASED>
 
     {
         jjtThis.setFilteredValueForToken(token);
     }
+}
 
-|   token = <IDENTIFIER_UNDERSCORE>
+/**
+ * A name for a private variable or function. A separate function is
+ * necessary (instead of checking inline) so that the node can appear
+ * individually, instead of nested inside another `normal_name` node,
+ * and so that this node, not a `normal_name` node, holds the value.
+ */
+void normal_name_underscore(): { Token token; } {
+    token = <IDENTIFIER_UNDERSCORE>
 
     {
         jjtThis.setFilteredValueForToken(token);
@@ -217,34 +254,28 @@ void return_statement(): {} {
  * A value of some sort (a variable name, literal, comparison, logical
  * expression, or binary expression).
  */
-void value(): {} {
+void value() #void: {} {
     LOOKAHEAD(2)
-    normal_name()
-|   LOOKAHEAD(2)
-    literal()
-|   expression()
+    expression()
+|   literal()
+|   normal_name()
 }
 
 /**
  * An expression made from two inputs and an operation, with optional
  * parenthesis.
  */
-void expression(): {} {
+void expression() #void: {} {
     expression_without_parenthesis()
-|   expression_with_parenthesis()
-}
-
-/**
- * A binary operation, with parenthesis.
- */
-void expression_with_parenthesis(): {} {
-    <PUNCTUATOR_OPENING_PARENTHESIS>
+|   <PUNCTUATOR_OPENING_PARENTHESIS>
     expression_without_parenthesis()
     <PUNCTUATOR_OPENING_PARENTHESIS>
 }
 
 /**
- * A binary operation, without parenthesis.
+ * A binary operation, without parenthesis. Having this separate
+ * function is useful so that it can be easily reused for expressions
+ * with or without parenthesis around them.
  */
 void expression_without_parenthesis(): {} {
     (
@@ -260,7 +291,7 @@ void expression_without_parenthesis(): {} {
  * (equality, less-than, greater-than, less-than-or-equal-to, or
  * greater-than-or-equal-to) or ("and" or "or").
  */
-void binary_operator(): {} {
+void binary_operator() #void: {} {
     <OPERATOR_PLUS> #binary_operator_plus
 |   <OPERATOR_MINUS> #binary_operator_minus
 |   <OPERATOR_TIMES> #binary_operator_times
@@ -284,25 +315,63 @@ void binary_operator(): {} {
 /**
  * A literal value (a string, float, integer, or boolean).
  */
-void literal(): { Token token; } {
-    token=<LITERAL_STRING> #literal_string
+void literal() #void: { Token token; } {
+    literal_string()
+|   literal_float()
+|   literal_int()
+|   literal_boolean()
+}
+
+/**
+ * A literal string. Having this separate function is necessary (instead of
+ * checking inline) so that the node can appear individually, instead
+ * of nested inside another `literal` node, and so that this node, not
+ * a `literal` node, holds the value.
+ */
+void literal_string(): { Token token; } {
+    token=<LITERAL_STRING>
 
     {
         jjtThis.setFilteredValueForToken(token);
     }
+}
 
-|   token=<LITERAL_FLOAT> #literal_float
+/**
+ * A literal float. Having this separate function is necessary (instead of
+ * checking inline) so that the node can appear individually, instead
+ * of nested inside another `literal` node, and so that this node, not
+ * a `literal` node, holds the value.
+ */
+void literal_float(): { Token token; } {
+    token=<LITERAL_FLOAT>
 
     {
         jjtThis.setFilteredValueForToken(token);
     }
-|   token=<LITERAL_INT> #literal_int
+}
+
+/**
+ * A literal integer. Having this separate function is necessary (instead of
+ * checking inline) so that the node can appear individually, instead
+ * of nested inside another `literal` node, and so that this node, not
+ * a `literal` node, holds the value.
+ */
+void literal_int(): { Token token; } {
+    token=<LITERAL_INT>
 
     {
         jjtThis.setFilteredValueForToken(token);
     }
+}
 
-|   token=<LITERAL_BOOLEAN> #literal_boolean
+/**
+ * A literal boolean. Having this separate function is necessary (instead of
+ * checking inline) so that the node can appear individually, instead
+ * of nested inside another `literal` node, and so that this node, not
+ * a `literal` node, holds the value.
+ */
+void literal_boolean(): { Token token; } {
+    token=<LITERAL_BOOLEAN>
 
     {
         jjtThis.setFilteredValueForToken(token);
