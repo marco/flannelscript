@@ -1,0 +1,359 @@
+options {
+    STATIC = false;
+    MULTI = true;
+    NODE_PREFIX = "ASTGenerated_";
+    NODE_CLASS = "ASTNode";
+    NODE_PACKAGE = "mandrill.parser.generatednodes";
+}
+
+PARSER_BEGIN(Parser)
+package mandrill.parser;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
+/**
+ * A parser that parses inputs that are created by `Lexer`, e.g.,
+ * `[COMMENT] [IDENTIFIER int] [IDENTIFIER value] [OPERATOR_EQUALS]
+ * [LITERAL_INT 13] [PUNCTUATOR_SEMICOLON]`.
+ */
+public class Parser {
+    public static void main(String[] args) {
+        Parser parser;
+
+        if (args.length == 0) {
+            System.out.println("Reading from standard input…");
+            parser = new Parser(System.in);
+        } else if (args.length == 1) {
+            System.out.println("Reading from file " + args[0] + "…");
+
+            try {
+                parser = new Parser(new FileInputStream(args[0]));
+            } catch (FileNotFoundException fileNotFoundException) {
+                System.out.println("error: The file " + args[0] + " was not found.");
+                return;
+            }
+        } else {
+            System.out.println("The parser can be as either");
+            System.out.println("    java Parser < input.mandrill");
+            System.out.println("or");
+            System.out.println("    java Parser input.mandrill");
+            return;
+        }
+
+        try {
+            parser.parse();
+            System.out.println("Parsing was successful.");
+            ((ASTNode) parser.jjtree.rootNode()).dump(" > ");
+        } catch (ParseException parseException) {
+            System.out.println("error: A `ParseException` was raised:");
+            System.out.println(parseException);
+        }
+    }
+}
+PARSER_END(Parser)
+
+/**
+ * The main file overview.
+ */
+void parse(): {} {
+    (
+        LOOKAHEAD(2)
+        class_declaration()
+    |   LOOKAHEAD(2)
+        function_declaration()
+    |   inside_function_action()
+    )*
+}
+
+/**
+ * A class declaration.
+ */
+void class_declaration(): {} {
+    type_name() <PUNCTUATOR_OPENING_ANGLE>
+    (
+        variable_declaration()
+    )*
+    (
+        function_declaration()
+    )*
+    <PUNCTUATOR_CLOSING_ANGLE>
+}
+
+/**
+ * A function declaration.
+ */
+void function_declaration(): {} {
+    normal_name()
+    <PUNCTUATOR_OPENING_SQUARE>
+    (type() normal_name())*
+    <PUNCTUATOR_CLOSING_SQUARE>
+    type()
+    <PUNCTUATOR_OPENING_ANGLE>
+    (inside_function_action())*
+    <PUNCTUATOR_CLOSING_ANGLE>
+}
+
+/**
+ * An action that can be performed inside a function (variable
+ * declaration, variable assignment, a function call, or a statement
+ * call). Lone semicolons are also allowed after statement calls, in
+ * order to make then accepted after statements like `return` and
+ * `echo`.
+ */
+void inside_function_action(): {} {
+    LOOKAHEAD(2)
+    variable_declaration()
+|   LOOKAHEAD(2)
+    variable_assignment()
+|   function_call()
+|   (statement_call() (<PUNCTUATOR_SEMICOLON>)?)
+}
+
+/**
+ * A variable declaration.
+ */
+void variable_declaration(): {} {
+    type() normal_name() <OPERATOR_EQUALS> value() <PUNCTUATOR_SEMICOLON>
+}
+
+/**
+ * A variable assignment.
+ */
+void variable_assignment(): {} {
+    normal_name() <OPERATOR_EQUALS> value() <PUNCTUATOR_SEMICOLON>
+}
+
+/**
+ * A function call.
+ */
+void function_call(): {} {
+    normal_name()
+    <PUNCTUATOR_OPENING_SQUARE>
+    (value())*
+    <PUNCTUATOR_CLOSING_SQUARE>
+    <PUNCTUATOR_SEMICOLON>
+}
+
+/**
+ * A statement call (an `if` statement, a `while` statement, an `echo`
+ * statement, or a `return `statement).
+ */
+void statement_call(): {} {
+   if_statement()
+|   while_statement()
+|   echo_statement()
+|   return_statement()
+}
+
+/**
+ * A name for a type.
+ */
+void type_name(): { Token token; } {
+    token = <IDENTIFIER_CAPITALIZED>
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+}
+
+/**
+ * A name for a type, along with an optional array syntax.
+ */
+void type(): {} {
+    type_name() ("{}")?
+}
+
+/**
+ * A name for a public or private variable or function
+ */
+void normal_name(): { Token token; } {
+    token = <IDENTIFIER_LOWERCASED>
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+
+|   token = <IDENTIFIER_UNDERSCORE>
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+}
+
+/**
+ * An `if` statement.
+ */
+void if_statement(): {} {
+    <KEYWORD_IF> value() <PUNCTUATOR_OPENING_ANGLE>
+    (inside_function_action())*
+    <PUNCTUATOR_CLOSING_ANGLE>
+}
+
+/**
+ * A `while` statement.
+ */
+void while_statement(): {} {
+    <KEYWORD_WHILE> value() <PUNCTUATOR_OPENING_ANGLE>
+    (inside_function_action())*
+    <PUNCTUATOR_CLOSING_ANGLE>
+}
+
+/**
+ * An `echo` statement.
+ */
+void echo_statement(): {} {
+    <KEYWORD_ECHO> value()
+}
+
+/**
+ * A `return` statement.
+ */
+void return_statement(): {} {
+    <KEYWORD_RETURN> value()
+}
+
+/**
+ * A value of some sort (a variable name, literal, comparison, logical
+ * expression, or binary expression).
+ */
+void value(): {} {
+    LOOKAHEAD(2)
+    normal_name()
+|   LOOKAHEAD(2)
+    literal()
+|   expression()
+}
+
+/**
+ * An expression made from two inputs and an operation, with optional
+ * parenthesis.
+ */
+void expression(): {} {
+    expression_without_parenthesis()
+|   expression_with_parenthesis()
+}
+
+/**
+ * A binary operation, with parenthesis.
+ */
+void expression_with_parenthesis(): {} {
+    <PUNCTUATOR_OPENING_PARENTHESIS>
+    expression_without_parenthesis()
+    <PUNCTUATOR_OPENING_PARENTHESIS>
+}
+
+/**
+ * A binary operation, without parenthesis.
+ */
+void expression_without_parenthesis(): {} {
+    (
+    normal_name()
+    |   literal()
+    )
+    binary_operator() value()
+}
+
+/**
+ * A binary operator for operation (addition, subtraction,
+ * multiplication, division, exponentiation, or modulation), comparison
+ * (equality, less-than, greater-than, less-than-or-equal-to, or
+ * greater-than-or-equal-to) or ("and" or "or").
+ */
+void binary_operator(): {} {
+    <OPERATOR_PLUS> #binary_operator_plus
+|   <OPERATOR_MINUS> #binary_operator_minus
+|   <OPERATOR_TIMES> #binary_operator_times
+|   <OPERATOR_DIVIDE> #binary_operator_divide
+|   <OPERATOR_EXPONENTIAL> #binary_operator_exponential
+|   <OPERATOR_MODULO> #binary_operator_modulo
+|   <PUNCTUATOR_COLON>
+    (
+    <OPERATOR_EQUALS> #binary_operator_equality
+    |   LOOKAHEAD(2)
+    <PUNCTUATOR_OPENING_ANGLE> #binary_operator_less_than
+    |   LOOKAHEAD(2)
+    <PUNCTUATOR_CLOSING_ANGLE> #binary_operator_greater_than
+    |   <PUNCTUATOR_OPENING_ANGLE> <OPERATOR_EQUALS> #binary_operator_less_or_equal
+    |   <PUNCTUATOR_CLOSING_ANGLE> <OPERATOR_EQUALS> #binary_operator_greater_or_equal
+    )
+|   <OPERATOR_AMPERSAND> #binary_operator_and
+|   <OPERATOR_BAR> #binary_operator_or
+}
+
+/**
+ * A literal value (a string, float, integer, or boolean).
+ */
+void literal(): { Token token; } {
+    token=<LITERAL_STRING> #literal_string
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+
+|   token=<LITERAL_FLOAT> #literal_float
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+|   token=<LITERAL_INT> #literal_int
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+
+|   token=<LITERAL_BOOLEAN> #literal_boolean
+
+    {
+        jjtThis.setFilteredValueForToken(token);
+    }
+}
+
+SKIP: {
+    " "
+|   "\t"
+|   "\n"
+|   "\r"
+|   "[COMMENT]"
+}
+
+/*
+    The following tokens are all duplicates of the tokens available in
+    `mandrill.lexer.TokenType`. Some do not include, whereas others do,
+    depending on the `shouldIncludeValue` value of the `TokenType`. For
+    those that do, the Regular Expressions are similar to the
+    `regexString` in `TokenType`.
+ */
+TOKEN: {
+    <PUNCTUATOR_OPENING_PARENTHESIS: "[PUNCTUATOR_OPENING_PARENTHESIS]">
+|   <PUNCTUATOR_CLOSING_PARENTHESIS: "[PUNCTUATOR_CLOSING_PARENTHESIS]">
+|   <PUNCTUATOR_OPENING_SQUARE: "[PUNCTUATOR_OPENING_SQUARE]">
+|   <PUNCTUATOR_CLOSING_SQUARE: "[PUNCTUATOR_CLOSING_SQUARE]">
+|   <PUNCTUATOR_OPENING_CURLY: "[PUNCTUATOR_OPENING_CURLY]">
+|   <PUNCTUATOR_CLOSING_CURLY: "[PUNCTUATOR_CLOSING_CURLY]">
+|   <PUNCTUATOR_OPENING_ANGLE: "[PUNCTUATOR_OPENING_ANGLE]">
+|   <PUNCTUATOR_CLOSING_ANGLE: "[PUNCTUATOR_CLOSING_ANGLE]">
+|   <PUNCTUATOR_COMMA: "[PUNCTUATOR_COMMA]">
+|   <PUNCTUATOR_SEMICOLON: "[PUNCTUATOR_SEMICOLON]">
+|   <PUNCTUATOR_COLON: "[PUNCTUATOR_COLON]">
+|   <OPERATOR_PLUS: "[OPERATOR_PLUS]">
+|   <OPERATOR_MINUS: "[OPERATOR_MINUS]">
+|   <OPERATOR_TIMES: "[OPERATOR_TIMES]">
+|   <OPERATOR_DIVIDE: "[OPERATOR_DIVIDE]">
+|   <OPERATOR_EXPONENTIAL: "[OPERATOR_EXPONENTIAL]">
+|   <OPERATOR_MODULO: "[OPERATOR_MODULO]">
+|   <OPERATOR_EQUALS: "[OPERATOR_EQUALS]">
+|   <OPERATOR_AMPERSAND: "[OPERATOR_AMPERSAND]">
+|   <OPERATOR_BAR: "[OPERATOR_BAR]">
+|   <LITERAL_STRING: "[LITERAL_STRING " "'" (~["'", "\\"] | ("\\" ~[]))* "']">
+|   <LITERAL_FLOAT: "[LITERAL_FLOAT " (["0"-"9"])+ "." (["0"-"9"])+ "]">
+|   <LITERAL_INT: "[LITERAL_INT "(["0"-"9"])+ "]">
+|   <LITERAL_BOOLEAN: "[LITERAL_BOOLEAN " ("true" | "false") "]">
+|   <KEYWORD_IF: "[KEYWORD_IF]">
+|   <KEYWORD_WHILE: "[KEYWORD_WHILE]">
+|   <KEYWORD_ECHO: "[KEYWORD_ECHO]">
+|   <KEYWORD_RETURN: "[KEYWORD_RETURN]">
+|   <IDENTIFIER_CAPITALIZED: "[IDENTIFIER_CAPITALIZED " ["A"-"Z"] (["_", "A"-"Z", "a"-"z"])* "]">
+|   <IDENTIFIER_LOWERCASED: "[IDENTIFIER_LOWERCASED " ["a"-"z"] (["_", "A"-"Z", "a"-"z"])* "]">
+|   <IDENTIFIER_UNDERSCORE: "[IDENTIFIER_UNDERSCORE " "_" (["_", "A"-"Z", "a"-"z"])* "]">
+}
