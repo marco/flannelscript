@@ -44,7 +44,9 @@ public class Parser {
         try {
             parser.parse();
             System.out.println("Parsing was successful.");
-            ((ASTNode) parser.jjtree.rootNode()).dump(" > ");
+            ((ASTNode) parser.jjtree.rootNode()).printNodeAndChildren(
+                "  ", "  ", "- "
+            );
         } catch (ParseException parseException) {
             System.out.println("error: A `ParseException` was raised:");
             System.out.println(parseException);

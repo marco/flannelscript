@@ -1,11 +1,12 @@
 package mandrill.parser;
 
-import mandrill.parser.generatednodes.*;
+import mandrill.parser.generatednodes.Node;
+import mandrill.parser.generatednodes.SimpleNode;
 
 /**
  * An abstract syntax tree node that extends from JavaCC's `SimpleNode` class.
  */
-public class ASTNode extends SimpleNode {
+public class ASTNode extends SimpleNode implements Node {
     public ASTNode(int id) {
         super(id);
     }
@@ -21,12 +22,13 @@ public class ASTNode extends SimpleNode {
      *
      * @return The string representation.
      */
+    @Override
     public String toString() {
         if (value != null) {
-            return super.toString() + ":" + this.value;
+            return getName() + ":" + getValue().toString();
         }
 
-        return super.toString();
+        return getName();
     }
 
     /**
@@ -42,5 +44,67 @@ public class ASTNode extends SimpleNode {
             value.indexOf(' ') + 1,
             value.length() - 1
         );
+    }
+
+    /**
+     * Returns this node's name.
+     *
+     * @return This node's name.
+     */
+    public String getName() {
+        return super.toString();
+    }
+
+    /**
+     * Returns this node's value.
+     *
+     * @return This node's value
+     */
+    public Object getValue() {
+        return value;
+    }
+
+    /**
+     * Returns this node's children.
+     *
+     * @return This node's children.
+     */
+    public Node[] getChildren() {
+        return children;
+    }
+
+    /**
+     * Prints this node's name and value as well as its childen's names and
+     * values.
+     *
+     * @param linePrefix The prefix to place before each line.
+     * @param indent The amount of indentation for each nested node level.
+     * @param itemPrefix The prefix to place before each item.
+     */
+    public void printNodeAndChildren(
+        String linePrefix,
+        String indent,
+        String itemPrefix
+    ) {
+        System.out.println(linePrefix + itemPrefix + toString());
+
+        if (children == null) {
+            return;
+        }
+
+        for (int i = 0; i < children.length; i++) {
+            ASTNode childNode = (ASTNode) children[i];
+
+            if (childNode == null) {
+                continue;
+            }
+
+            childNode.printNodeAndChildren(linePrefix + indent, indent, itemPrefix);
+        }
+    }
+
+    @Override
+    public void dump(String prefix) {
+        printNodeAndChildren(prefix, "  ", "- ");
     }
 }
