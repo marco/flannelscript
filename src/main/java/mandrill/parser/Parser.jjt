@@ -72,7 +72,17 @@ void parse(): {} {
  * A class declaration.
  */
 void class_declaration(): {} {
-    type_name_without_array() <PUNCTUATOR_OPENING_ANGLE>
+    type_name_without_array()
+    (
+        <PUNCTUATOR_OPENING_SQUARE>
+        type_name_without_array()
+        <PUNCTUATOR_CLOSING_SQUARE>
+    )?
+    <PUNCTUATOR_OPENING_ANGLE>
+    (
+        LOOKAHEAD(2)
+        variable_assignment()
+    )*
     (
         variable_declaration()
     )*
