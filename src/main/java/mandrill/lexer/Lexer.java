@@ -19,9 +19,17 @@ public class Lexer {
                 Matcher matcher = pattern.matcher(currentTokenString);
 
                 if (matcher.find()) {
+                    Object value;
+
+                    if (tokenTypes[j].getShouldIncludeValue()) {
+                        value = matcher.group();
+                    } else {
+                        value = null;
+                    }
+
                     Token newToken = new Token(
                         tokenTypes[j],
-                        matcher.group()
+                        value
                     );
                     currentTokenList.add(newToken);
                     currentTokenString = "";
