@@ -10,5 +10,5 @@ if [ $# -eq 0 ]
 then
     java mandrill.parser.Parser
 else
-    java mandrill.parser.Parser $1
+    java mandrill.parser.Parser "$@"
 fi
