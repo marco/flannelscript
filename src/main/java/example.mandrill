@@ -1,0 +1,16 @@
+Dog <
+    Int age = 13;
+    Str name = 'Rover';
+
+    getHumanYears[Int forAge] Int <
+        return forAge / 7;
+    >
+>
+
+echoName[] Void <
+    echo 'Hello, World!';
+>
+
+echoName[];
+
+
