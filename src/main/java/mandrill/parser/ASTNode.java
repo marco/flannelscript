@@ -1,5 +1,7 @@
 package mandrill.parser;
 
+import java.util.Arrays;
+
 import mandrill.parser.generatednodes.Node;
 import mandrill.parser.generatednodes.SimpleNode;
 
@@ -60,8 +62,8 @@ public class ASTNode extends SimpleNode implements Node {
      *
      * @return This node's value
      */
-    public Object getValue() {
-        return value;
+    public String getValue() {
+        return (String) value;
     }
 
     /**
@@ -69,8 +71,21 @@ public class ASTNode extends SimpleNode implements Node {
      *
      * @return This node's children.
      */
-    public Node[] getChildren() {
-        return children;
+    public ASTNode[] getChildren() {
+        if (children == null) {
+            return new ASTNode[] {};
+        }
+
+        return Arrays.copyOf(children, children.length, ASTNode[].class);
+    }
+
+    /**
+     * Returns this node's child node at a specific index.
+     *
+     * @return The child node.
+     */
+    public ASTNode getChild(int index) {
+        return getChildren()[index];
     }
 
     /**
