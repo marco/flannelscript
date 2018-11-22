@@ -11,6 +11,10 @@ package mandrill.parser;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+
+import mandrill.runtime.RuntimeNode;
 
 /**
  * A parser that parses inputs that are created by `Lexer`, e.g.,
@@ -34,19 +38,17 @@ public class Parser {
                 return;
             }
         } else {
-            System.out.println("The parser can be as either");
-            System.out.println("    java Parser < input.mandrill");
-            System.out.println("or");
-            System.out.println("    java Parser input.mandrill");
-            return;
+            parser = new Parser(
+                new ByteArrayInputStream(
+                    args[1].getBytes(StandardCharsets.UTF_8)
+                )
+            );
         }
 
         try {
             parser.parse();
             System.out.println("Parsing was successful.");
-            ((ASTNode) parser.jjtree.rootNode()).printNodeAndChildren(
-                "  ", "  ", "- "
-            );
+            RuntimeNode.runRootNode((ASTNode) parser.jjtree.rootNode());
         } catch (ParseException parseException) {
             System.out.println("error: A `ParseException` was raised:");
             System.out.println(parseException);
@@ -62,7 +64,7 @@ void parse(): {} {
     (
         LOOKAHEAD(2)
         class_declaration()
-    |   LOOKAHEAD(2)
+    |   LOOKAHEAD(4)
         function_declaration()
     |   inside_function_action()
     )*
@@ -73,22 +75,11 @@ void parse(): {} {
  */
 void class_declaration(): {} {
     type_name_without_array()
-    (
-        <PUNCTUATOR_OPENING_SQUARE>
-        type_name_without_array()
-        <PUNCTUATOR_CLOSING_SQUARE>
-    )?
+    class_extension()
     <PUNCTUATOR_OPENING_ANGLE>
-    (
-        LOOKAHEAD(2)
-        variable_assignment()
-    )*
-    (
-        variable_declaration()
-    )*
-    (
-        function_declaration()
-    )*
+    variable_assignments()
+    variable_declarations()
+    function_declarations()
     <PUNCTUATOR_CLOSING_ANGLE>
 }
 
@@ -98,12 +89,30 @@ void class_declaration(): {} {
 void function_declaration(): {} {
     normal_name()
     <PUNCTUATOR_OPENING_SQUARE>
-    (type() normal_name())*
+    parameters()
     <PUNCTUATOR_CLOSING_SQUARE>
     type()
     <PUNCTUATOR_OPENING_ANGLE>
-    (inside_function_action())*
+    inside_function_actions()
     <PUNCTUATOR_CLOSING_ANGLE>
+}
+
+/**
+ * A series of function declarations.
+ */
+void function_declarations(): {} {
+    (function_declaration())*
+}
+
+/**
+ * An optional class extension.
+ */
+void class_extension(): {} {
+    (
+        <PUNCTUATOR_OPENING_SQUARE>
+        type_name_without_array()
+        <PUNCTUATOR_CLOSING_SQUARE>
+    )?
 }
 
 /**
@@ -113,13 +122,23 @@ void function_declaration(): {} {
  * order to make then accepted after statements like `return` and
  * `echo`.
  */
-void inside_function_action() #void: {} {
+void inside_function_action(): {} {
     LOOKAHEAD(2)
     variable_declaration()
 |   LOOKAHEAD(2)
     variable_assignment()
 |   function_call()
 |   (statement_call() (<PUNCTUATOR_SEMICOLON>)?)
+}
+
+/**
+ * A series of inside function actions.
+ */
+void inside_function_actions(): {} {
+    (
+        LOOKAHEAD(2)
+        inside_function_action()
+    )*
 }
 
 /**
@@ -130,10 +149,30 @@ void variable_declaration(): {} {
 }
 
 /**
+ * A series of variable declarations.
+ */
+void variable_declarations(): {} {
+    (
+        LOOKAHEAD(2)
+        variable_declaration()
+    )*
+}
+
+/**
  * A variable assignment.
  */
 void variable_assignment(): {} {
     normal_name() <OPERATOR_EQUALS> value() <PUNCTUATOR_SEMICOLON>
+}
+
+/**
+ * A series of variable assignments.
+ */
+void variable_assignments(): {} {
+    (
+        LOOKAHEAD(2)
+        variable_assignment()
+    )*
 }
 
 /**
@@ -142,7 +181,7 @@ void variable_assignment(): {} {
 void function_call(): {} {
     normal_name()
     <PUNCTUATOR_OPENING_SQUARE>
-    (value())*
+    values()
     <PUNCTUATOR_CLOSING_SQUARE>
     <PUNCTUATOR_SEMICOLON>
 }
@@ -151,7 +190,7 @@ void function_call(): {} {
  * A statement call (an `if` statement, a `while` statement, an `echo`
  * statement, or a `return `statement).
  */
-void statement_call() #void: {} {
+void statement_call(): {} {
     if_statement()
 |   while_statement()
 |   echo_statement()
@@ -188,7 +227,7 @@ void type_name_with_array(): { Token token; } {
 /**
  * A name for a type, along with an optional array syntax.
  */
-void type() #void: {} {
+void type(): {} {
     LOOKAHEAD(2)
     type_name_with_array()
 |   type_name_without_array()
@@ -197,7 +236,7 @@ void type() #void: {} {
 /**
  * A name for a public or private variable or function
  */
-void normal_name() #void: { Token token; } {
+void normal_name(): { Token token; } {
     normal_name_lowercased()
 |   normal_name_underscore()
 }
@@ -231,11 +270,43 @@ void normal_name_underscore(): { Token token; } {
 }
 
 /**
+ * A parameter, consisting of a type and name.
+ */
+void parameter(): {} {
+    type() normal_name()
+}
+
+/**
+ * A series of parameters, separated by commas.
+ */
+void parameters(): {} {
+    (
+        parameter()
+        (
+            LOOKAHEAD(2)
+            <PUNCTUATOR_COMMA> parameter()
+        )*
+    )?
+}
+
+/**
+ * A series of values, separated by commas.
+ */
+void values(): {} {
+    (
+        value()
+        (
+            <PUNCTUATOR_COMMA> value()
+        )*
+    )?
+}
+
+/**
  * An `if` statement.
  */
 void if_statement(): {} {
     <KEYWORD_IF> value() <PUNCTUATOR_OPENING_ANGLE>
-    (inside_function_action())*
+    inside_function_actions()
     <PUNCTUATOR_CLOSING_ANGLE>
 }
 
@@ -244,7 +315,7 @@ void if_statement(): {} {
  */
 void while_statement(): {} {
     <KEYWORD_WHILE> value() <PUNCTUATOR_OPENING_ANGLE>
-    (inside_function_action())*
+    inside_function_actions()
     <PUNCTUATOR_CLOSING_ANGLE>
 }
 
@@ -266,7 +337,7 @@ void return_statement(): {} {
  * A value of some sort (a variable name, literal, comparison, logical
  * expression, or binary expression).
  */
-void value() #void: {} {
+void value(): {} {
     LOOKAHEAD(2)
     expression()
 |   literal()
@@ -277,7 +348,7 @@ void value() #void: {} {
  * An expression made from two inputs and an operation, with optional
  * parenthesis.
  */
-void expression() #void: {} {
+void expression(): {} {
     expression_without_parenthesis()
 |   <PUNCTUATOR_OPENING_PARENTHESIS>
     expression_without_parenthesis()
@@ -303,7 +374,7 @@ void expression_without_parenthesis(): {} {
  * (equality, less-than, greater-than, less-than-or-equal-to, or
  * greater-than-or-equal-to) or ("and" or "or").
  */
-void binary_operator() #void: {} {
+void binary_operator(): {} {
     <OPERATOR_PLUS> #binary_operator_plus
 |   <OPERATOR_MINUS> #binary_operator_minus
 |   <OPERATOR_TIMES> #binary_operator_times
@@ -327,7 +398,7 @@ void binary_operator() #void: {} {
 /**
  * A literal value (a string, float, integer, or boolean).
  */
-void literal() #void: { Token token; } {
+void literal(): { Token token; } {
     literal_string()
 |   literal_float()
 |   literal_int()
