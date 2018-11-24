@@ -1,14 +1,15 @@
 package mandrill.runtime;
 
 public class RuntimeConstants {
+    private static CreatedClass<Object> objClass;
     private static CreatedClass<Boolean> blnClass;
     private static CreatedClass<String> strClass;
     private static CreatedClass<Long> intClass;
     private static CreatedClass<Double> fltClass;
 
     public static void setGlobals() {
-        CreatedClass<Object> objClass = new CreatedClass<Object>("Obj");
-        CreatedClass<Object> voidClass = new CreatedClass<Object>("Void");
+        objClass = new CreatedClass<Object>("Obj", null);
+        CreatedClass<Object> voidClass = new CreatedClass<Object>("Void", null);
         RuntimeContext.setClass("Obj", objClass);
         RuntimeContext.setClass("Void", voidClass);
         RuntimeContext.setGlobal("und", objClass.createObject(null));
@@ -17,16 +18,16 @@ public class RuntimeConstants {
         // Classes:
 
         // `Bln`:
-        blnClass = new CreatedClass<Boolean>("Bln");
+        blnClass = new CreatedClass<Boolean>("Bln", objClass);
 
         // `Str`:
-        strClass = new CreatedClass<String>("Str");
+        strClass = new CreatedClass<String>("Str", objClass);
 
         // `Int`:
-        intClass = new CreatedClass<Long>("Int");
+        intClass = new CreatedClass<Long>("Int", objClass);
 
         // `Flt`:
-        fltClass = new CreatedClass<Double>("Flt");
+        fltClass = new CreatedClass<Double>("Flt", objClass);
 
         // Methods:
 
@@ -397,6 +398,10 @@ public class RuntimeConstants {
     ) {
         ParameterMap parameters = new ParameterMap();
         classToUse.addMethod(name, new CreatedFunction<B>(parameters, function, returnType, name));
+    }
+
+    static CreatedClass<Object> getObjClass() {
+        return objClass;
     }
 
     static CreatedClass<Boolean> getBlnClass() {

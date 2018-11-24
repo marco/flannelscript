@@ -21,3 +21,12 @@ while (i :<= 100) <
 >
 
 echo 'Done';
+
+Animal <
+    Int age = 5;
+>
+
+Dog [Animal] <
+    age = 13;
+    Str name = 'Rover';
+>

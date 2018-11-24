@@ -130,11 +130,30 @@ public class RuntimeNode {
         if (node instanceof ASTGenerated_class_declaration) {
             ASTNode[] children = node.getChildren();
             String className = children[0].getValue();
+            String extendsName = children[1].getValue();
+            CreatedClass extendsClass;
 
+            if (extendsName == null) {
+                extendsClass = RuntimeConstants.getObjClass();
+            } else {
+                extendsClass = RuntimeContext.getClass(extendsName);
+            }
+
+            DefaultPropertyMap extendsOverrides = new DefaultPropertyMap();
             DefaultPropertyMap defaultProperties = new DefaultPropertyMap();
             MethodMap<Object> methods = new MethodMap<Object>();
+            ASTNode[] overrideNodes = children[2].getChildren();
             ASTNode[] propertyNodes = children[3].getChildren();
             ASTNode[] functionNodes = children[4].getChildren();
+
+            for (int i = 0; i < overrideNodes.length; i++) {
+                String propertyName
+                    = overrideNodes[i].getChild(0).getChild(0).getValue();
+                CreatedObject evaluatedValue
+                    = evaluateASTNode(overrideNodes[i].getChild(1), context);
+
+                extendsOverrides.put(propertyName, evaluatedValue);
+            }
 
             for (int i = 0; i < propertyNodes.length; i++) {
                 String typeName
@@ -189,7 +208,13 @@ public class RuntimeNode {
 
             RuntimeContext.setClass(
                 className,
-                new CreatedClass<Object>(defaultProperties, methods, className)
+                new CreatedClass<Object>(
+                    extendsOverrides,
+                    defaultProperties,
+                    methods,
+                    className,
+                    extendsClass
+                )
             );
         }
 
