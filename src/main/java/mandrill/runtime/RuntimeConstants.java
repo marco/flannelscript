@@ -7,8 +7,8 @@ public class RuntimeConstants {
     private static CreatedClass<Double> fltClass;
 
     public static void setGlobals() {
-        CreatedClass<Object> objClass = new CreatedClass<Object>();
-        CreatedClass<Object> voidClass = new CreatedClass<Object>();
+        CreatedClass<Object> objClass = new CreatedClass<Object>("Obj");
+        CreatedClass<Object> voidClass = new CreatedClass<Object>("Void");
         RuntimeContext.setClass("Obj", objClass);
         RuntimeContext.setClass("Void", voidClass);
         RuntimeContext.setGlobal("und", objClass.createObject(null));
@@ -17,16 +17,16 @@ public class RuntimeConstants {
         // Classes:
 
         // `Bln`:
-        blnClass = new CreatedClass<Boolean>();
+        blnClass = new CreatedClass<Boolean>("Bln");
 
         // `Str`:
-        strClass = new CreatedClass<String>();
+        strClass = new CreatedClass<String>("Str");
 
         // `Int`:
-        intClass = new CreatedClass<Long>();
+        intClass = new CreatedClass<Long>("Int");
 
         // `Flt`:
-        fltClass = new CreatedClass<Double>();
+        fltClass = new CreatedClass<Double>("Flt");
 
         // Methods:
 
@@ -371,7 +371,7 @@ public class RuntimeConstants {
         ParameterMap parameters = new ParameterMap();
         parameters.put("other", classToUse);
 
-        classToUse.addMethod(name, new CreatedFunction<B>(parameters, function, classToUse));
+        classToUse.addMethod(name, new CreatedFunction<B>(parameters, function, classToUse, name));
     }
 
     static <B, RB> void addSelfFunctionToClass(
@@ -381,7 +381,7 @@ public class RuntimeConstants {
         CreatedClass<RB> returnType
     ) {
         ParameterMap parameters = new ParameterMap();
-        classToUse.addMethod(name, new CreatedFunction<B>(parameters, function, returnType));
+        classToUse.addMethod(name, new CreatedFunction<B>(parameters, function, returnType, name));
     }
 
     static CreatedClass<Boolean> getBlnClass() {

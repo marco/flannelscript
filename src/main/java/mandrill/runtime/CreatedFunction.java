@@ -10,25 +10,30 @@ public class CreatedFunction<B> {
     private ASTNode body;
     private RuntimeFunction baseBody;
     private CreatedClass returnClass;
+    private String name;
 
     public CreatedFunction(
         ParameterMap parameters,
         ASTNode body,
-        CreatedClass returnClass
+        CreatedClass returnClass,
+        String name
     ) {
         this.parameters = parameters;
         this.body = body;
         this.returnClass = returnClass;
+        this.name = name;
     }
 
     public CreatedFunction(
         ParameterMap parameters,
         RuntimeFunction baseBody,
-        CreatedClass returnClass
+        CreatedClass returnClass,
+        String name
     ) {
         this.parameters = parameters;
         this.baseBody = baseBody;
         this.returnClass = returnClass;
+        this.name = name;
     }
 
     public CreatedObject call(
@@ -37,15 +42,25 @@ public class CreatedFunction<B> {
         RuntimeContext currentContext = new RuntimeContext(receiver);
         int i = 0;
 
+        if (arguments.length != parameters.size()) {
+            throw new ArgumentException(
+                "Expected " + parameters.size() + "arguments, but "
+                    + arguments.length + " were found."
+            );
+        }
+
         for (String parameterName : parameters.keySet()) {
             if (parameters.get(parameterName) != arguments[i].getObjectClass()) {
                 throw new ArgumentException(
-                    "Parameter " + i + " is not of the correct type."
+                    "Parameter " + i + " is not of the correct type. Expected type `"
+                        + parameters.get(parameterName).toString() + "` but found `"
+                        + arguments[i].getObjectClass().toString() + "` for function `"
+                        + name + "`."
                 );
             }
 
-            i++;
             currentContext.setLocal(parameterName, arguments[i]);
+            i++;
         }
 
         if (baseBody != null) {
@@ -77,6 +92,11 @@ public class CreatedFunction<B> {
         }
 
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
 

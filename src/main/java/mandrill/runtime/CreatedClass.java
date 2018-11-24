@@ -5,17 +5,20 @@ import java.util.LinkedHashMap;
 public class CreatedClass<B> {
     private DefaultPropertyMap defaultProperties;
     private MethodMap<B> methods;
+    private String name;
 
     public CreatedClass(
         DefaultPropertyMap defaultProperties,
-        MethodMap<B> methods
+        MethodMap<B> methods,
+        String name
     ) {
         this.defaultProperties = defaultProperties;
         this.methods = methods;
+        this.name = name;
     }
 
-    public CreatedClass() {
-        this(new DefaultPropertyMap(), new MethodMap<B>());
+    public CreatedClass(String name) {
+        this(new DefaultPropertyMap(), new MethodMap<B>(), name);
     }
 
     public CreatedObject<B> createObject() {
@@ -61,6 +64,11 @@ public class CreatedClass<B> {
         }
 
         return properties;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
 
