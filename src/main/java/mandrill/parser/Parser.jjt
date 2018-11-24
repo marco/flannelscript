@@ -343,51 +343,57 @@ void value(): {} {
     LOOKAHEAD(3)
     expression_without_parenthesis()
 |   LOOKAHEAD(3)
+    (exclamation_point())?
     expression_with_parenthesis()
-|   literal()
-|   normal_name()
+|   LOOKAHEAD(2)
+    (exclamation_point())?
+    literal()
+|   LOOKAHEAD(2)
+    (exclamation_point())?
+    normal_name()
 }
 
-void inner_value(): {} {
-    LOOKAHEAD(3)
-    expression_without_parenthesis()
-|   LOOKAHEAD(3)
+void value_without_expression_without_parenthesis(): {} {
+    LOOKAHEAD(2)
+    (exclamation_point())?
     expression_with_parenthesis()
-|   literal()
-|   normal_name()
+|   LOOKAHEAD(2)
+    (exclamation_point())?
+    literal()
+|   LOOKAHEAD(2)
+    (exclamation_point())?
+    normal_name()
+}
+
+void exclamation_point(): {} {
+    <PUNCTUATOR_EXCLAMATION>
+}
+
+void value_without_expression(): {} {
+    LOOKAHEAD(2)
+    (exclamation_point())?
+    normal_name()
+|   LOOKAHEAD(2)
+    (exclamation_point())?
+    literal()
 }
 
 void expression_without_parenthesis(): {} {
-    (
-        normal_name()
-    |   literal()
-    )
+    value_without_expression()
     (
         LOOKAHEAD(2)
         binary_operator()
-        (
-            expression_with_parenthesis()
-        |   literal()
-        |   normal_name()
-        )
+        value_without_expression_without_parenthesis()
     )+
 }
 
 void expression_with_parenthesis(): {} {
     <PUNCTUATOR_OPENING_PARENTHESIS>
-    (
-        normal_name()
-    |   literal()
-    |   expression_with_parenthesis()
-    )
+    value_without_expression_without_parenthesis()
     (
         LOOKAHEAD(2)
         binary_operator()
-        (
-            expression_with_parenthesis()
-        |   literal()
-        |   normal_name()
-        )
+        value_without_expression_without_parenthesis()
     )+
     <PUNCTUATOR_CLOSING_PARENTHESIS>
 }
@@ -511,6 +517,7 @@ TOKEN: {
 |   <PUNCTUATOR_COMMA: "[PUNCTUATOR_COMMA]">
 |   <PUNCTUATOR_SEMICOLON: "[PUNCTUATOR_SEMICOLON]">
 |   <PUNCTUATOR_COLON: "[PUNCTUATOR_COLON]">
+|   <PUNCTUATOR_EXCLAMATION: "[PUNCTUATOR_EXCLAMATION]">
 |   <OPERATOR_PLUS: "[OPERATOR_PLUS]">
 |   <OPERATOR_MINUS: "[OPERATOR_MINUS]">
 |   <OPERATOR_TIMES: "[OPERATOR_TIMES]">

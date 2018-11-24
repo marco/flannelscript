@@ -1,9 +1,9 @@
 package mandrill.runtime;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import mandrill.parser.ASTNode;
 import mandrill.parser.generatednodes.*;
@@ -249,8 +249,24 @@ public class RuntimeNode {
     ) {
         if (
             node instanceof ASTGenerated_value
-                || node instanceof ASTGenerated_inner_value
+                || node instanceof ASTGenerated_value_without_expression
+                || node instanceof ASTGenerated_value_without_expression_without_parenthesis
         ) {
+            if (node.getChild(0) instanceof ASTGenerated_exclamation_point) {
+                CreatedObject evaluatedChild = evaluateASTNode(node.getChild(1), context);
+
+                if (evaluatedChild.getObjectClass() != RuntimeConstants.getBlnClass()) {
+                    throw new RuntimeNodeException("Expected `Bln` type, but was not found.");
+                }
+
+                return evaluatedChild.callMethod(
+                    "equals",
+                    new CreatedObject[] {
+                        RuntimeConstants.getBlnClass().createObject(false)
+                    }
+                );
+            }
+
             return evaluateASTNode(node.getChildren()[0], context);
         }
 
