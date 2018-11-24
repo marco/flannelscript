@@ -37,10 +37,12 @@ public class RuntimeContext {
     public void updateObject(String name, CreatedObject createdObject) {
         if (locals.containsKey(name)) {
             locals.put(name, createdObject);
+            return;
         }
 
         if (openObject.checkHasProperty(name)) {
             openObject.setProperty(name, createdObject);
+            return;
         }
 
         if (globals.containsKey(name)) {

@@ -4,6 +4,7 @@ options {
     NODE_PREFIX = "ASTGenerated_";
     NODE_CLASS = "ASTNode";
     NODE_PACKAGE = "mandrill.parser.generatednodes";
+    DEBUG_PARSER = true;
 }
 
 PARSER_BEGIN(Parser)
@@ -48,6 +49,7 @@ public class Parser {
         try {
             parser.parse();
             System.out.println("Parsing was successful.");
+            ((ASTNode) parser.jjtree.rootNode()).dump("   ");
             RuntimeNode.runRootNode((ASTNode) parser.jjtree.rootNode());
         } catch (ParseException parseException) {
             System.out.println("error: A `ParseException` was raised:");
@@ -338,34 +340,56 @@ void return_statement(): {} {
  * expression, or binary expression).
  */
 void value(): {} {
-    LOOKAHEAD(2)
-    expression()
+    LOOKAHEAD(3)
+    expression_without_parenthesis()
+|   LOOKAHEAD(3)
+    expression_with_parenthesis()
 |   literal()
 |   normal_name()
 }
 
-/**
- * An expression made from two inputs and an operation, with optional
- * parenthesis.
- */
-void expression(): {} {
+void inner_value(): {} {
+    LOOKAHEAD(3)
     expression_without_parenthesis()
-|   <PUNCTUATOR_OPENING_PARENTHESIS>
-    expression_without_parenthesis()
-    <PUNCTUATOR_OPENING_PARENTHESIS>
+|   LOOKAHEAD(3)
+    expression_with_parenthesis()
+|   literal()
+|   normal_name()
 }
 
-/**
- * A binary operation, without parenthesis. Having this separate
- * function is useful so that it can be easily reused for expressions
- * with or without parenthesis around them.
- */
 void expression_without_parenthesis(): {} {
     (
-    normal_name()
+        normal_name()
     |   literal()
     )
-    binary_operator() value()
+    (
+        LOOKAHEAD(2)
+        binary_operator()
+        (
+            expression_with_parenthesis()
+        |   literal()
+        |   normal_name()
+        )
+    )+
+}
+
+void expression_with_parenthesis(): {} {
+    <PUNCTUATOR_OPENING_PARENTHESIS>
+    (
+        normal_name()
+    |   literal()
+    |   expression_with_parenthesis()
+    )
+    (
+        LOOKAHEAD(2)
+        binary_operator()
+        (
+            expression_with_parenthesis()
+        |   literal()
+        |   normal_name()
+        )
+    )+
+    <PUNCTUATOR_CLOSING_PARENTHESIS>
 }
 
 /**
@@ -381,16 +405,15 @@ void binary_operator(): {} {
 |   <OPERATOR_DIVIDE> #binary_operator_divide
 |   <OPERATOR_EXPONENTIAL> #binary_operator_exponential
 |   <OPERATOR_MODULO> #binary_operator_modulo
-|   <PUNCTUATOR_COLON>
-    (
-    <OPERATOR_EQUALS> #binary_operator_equality
-    |   LOOKAHEAD(2)
-    <PUNCTUATOR_OPENING_ANGLE> #binary_operator_less_than
-    |   LOOKAHEAD(2)
-    <PUNCTUATOR_CLOSING_ANGLE> #binary_operator_greater_than
-    |   <PUNCTUATOR_OPENING_ANGLE> <OPERATOR_EQUALS> #binary_operator_less_or_equal
-    |   <PUNCTUATOR_CLOSING_ANGLE> <OPERATOR_EQUALS> #binary_operator_greater_or_equal
-    )
+|   LOOKAHEAD(3)
+    <PUNCTUATOR_COLON> <PUNCTUATOR_OPENING_ANGLE> <OPERATOR_EQUALS> #binary_operator_less_or_equal
+|   LOOKAHEAD(3)
+    <PUNCTUATOR_COLON> <PUNCTUATOR_CLOSING_ANGLE> <OPERATOR_EQUALS> #binary_operator_greater_or_equal
+|   LOOKAHEAD(3)
+    <PUNCTUATOR_COLON> <OPERATOR_EQUALS> #binary_operator_equality
+|   LOOKAHEAD(3)
+    <PUNCTUATOR_COLON> <PUNCTUATOR_OPENING_ANGLE> #binary_operator_less_than
+|   <PUNCTUATOR_COLON> <PUNCTUATOR_CLOSING_ANGLE> #binary_operator_greater_than
 |   <OPERATOR_AMPERSAND> #binary_operator_and
 |   <OPERATOR_BAR> #binary_operator_or
 }
