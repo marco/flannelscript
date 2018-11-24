@@ -1,16 +1,23 @@
-Dog <
-    Int age = 13;
-    Str name = 'Rover';
+Int i = 1;
 
-    getHumanYears[Int forAge] Int <
-        return forAge / 7;
+while (i :<= 100) <
+    if ((i % 3 := 0) & (i % 5 := 0)) <
+        echo 'Fizzbuzz';
     >
+
+    if ((i % 3 := 0) & ((i % 5 := 0) := false)) <
+        echo 'Fizz';
+    >
+
+    if ((i % 5 := 0) & ((i % 3 := 0) := false)) <
+        echo 'Buzz';
+    >
+
+    if (((i % 3 := 0) := false) & ((i % 5 := 0) := false)) <
+        echo i;
+    >
+
+    i = i + 1;
 >
 
-echoName[] Void <
-    echo 'Hello, World!';
->
-
-echoName[];
-
-
+echo 'Fizzbuzz';
