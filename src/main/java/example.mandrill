@@ -5,11 +5,11 @@ while (i :<= 100) <
         echo 'Fizzbuzz';
     >
 
-    if (i % 3 := 0 & !(i % 5 := 0)) <
+    if (i % 3 := 0 & i % 5 != 0) <
         echo 'Fizz';
     >
 
-    if (i % 5 := 0 & !(i % 3 := 0)) <
+    if (i % 5 := 0 & i % 3 != 0) <
         echo 'Buzz';
     >
 

@@ -427,6 +427,10 @@ public class RuntimeNode {
             return "equals";
         }
 
+        if (operatorNode instanceof ASTGenerated_binary_operator_negated_equality) {
+            return "doesNotEqual";
+        }
+
         if (operatorNode instanceof ASTGenerated_binary_operator_plus) {
             return "add";
         }
@@ -484,6 +488,10 @@ public class RuntimeNode {
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_equality) {
+            return 30;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_negated_equality) {
             return 30;
         }
 

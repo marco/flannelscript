@@ -418,6 +418,8 @@ void binary_operator(): {} {
 |   LOOKAHEAD(3)
     <PUNCTUATOR_COLON> <OPERATOR_EQUALS> #binary_operator_equality
 |   LOOKAHEAD(3)
+    <PUNCTUATOR_EXCLAMATION> <OPERATOR_EQUALS> #binary_operator_negated_equality
+|   LOOKAHEAD(3)
     <PUNCTUATOR_COLON> <PUNCTUATOR_OPENING_ANGLE> #binary_operator_less_than
 |   <PUNCTUATOR_COLON> <PUNCTUATOR_CLOSING_ANGLE> #binary_operator_greater_than
 |   <OPERATOR_AMPERSAND> #binary_operator_and

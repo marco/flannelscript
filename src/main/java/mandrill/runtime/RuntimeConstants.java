@@ -45,6 +45,21 @@ public class RuntimeConstants {
         addBinaryFunctionToClass(intClass, "equals", equalsFunction);
         addBinaryFunctionToClass(fltClass, "equals", equalsFunction);
 
+        // `doesNotEqual`:
+
+        RuntimeFunction doesNotEqualFunction = (RuntimeContext context) -> {
+            if (context.getOpenBaseValue().equals(context.getObject("other").getBaseValue())) {
+                return blnClass.createObject(false);
+            }
+
+            return blnClass.createObject(true);
+        };
+
+        addBinaryFunctionToClass(blnClass, "doesNotEqual", doesNotEqualFunction);
+        addBinaryFunctionToClass(strClass, "doesNotEqual", doesNotEqualFunction);
+        addBinaryFunctionToClass(intClass, "doesNotEqual", doesNotEqualFunction);
+        addBinaryFunctionToClass(fltClass, "doesNotEqual", doesNotEqualFunction);
+
         // `add` (`str`):
 
         RuntimeFunction strAddFunction = (RuntimeContext context) -> {
