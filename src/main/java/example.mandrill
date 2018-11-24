@@ -1,23 +1,23 @@
 Int i = 1;
 
 while (i :<= 100) <
-    if ((i % 3 := 0) & (i % 5 := 0)) <
+    if (i % 3 := 0 & i % 5 := 0) <
         echo 'Fizzbuzz';
     >
 
-    if ((i % 3 := 0) & ((i % 5 := 0) := false)) <
+    if (i % 3 := 0 & i % 5 := 0 := false) <
         echo 'Fizz';
     >
 
-    if ((i % 5 := 0) & ((i % 3 := 0) := false)) <
+    if (i % 5 := 0 & i % 3 := 0 := false) <
         echo 'Buzz';
     >
 
-    if (((i % 3 := 0) := false) & ((i % 5 := 0) := false)) <
+    if (i % 3 := 0 := false & i % 5 := 0 := false) <
         echo i;
     >
 
     i = i + 1;
 >
 
-echo 'Fizzbuzz';
+echo 'Done';

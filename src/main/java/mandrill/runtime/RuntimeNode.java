@@ -2,6 +2,8 @@ package mandrill.runtime;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import mandrill.parser.ASTNode;
 import mandrill.parser.generatednodes.*;
@@ -309,141 +311,212 @@ public class RuntimeNode {
                 || node instanceof ASTGenerated_expression_without_parenthesis
         ) {
             ASTNode[] expressionChildren = node.getChildren();
+            List<Object> expressionChildrenRemaining
+                = new ArrayList<Object>(Arrays.asList(expressionChildren));
             int expressionSteps = (expressionChildren.length - 1) / 2;
-            CreatedObject currentValue = evaluateASTExpressionStep(
-                expressionChildren[0],
-                expressionChildren[1],
-                expressionChildren[2],
-                context
-            );
+            CreatedObject currentValue = null;
 
-            for (int i = 1; i < expressionSteps; i++) {
-                currentValue = evaluateExpressionStep(
-                    currentValue,
-                    expressionChildren[i * 2 + 1],
-                    expressionChildren[i * 2 + 2],
+            while (1 < expressionChildrenRemaining.size()) {
+                int currentHighestPrecedence = -1;
+                int currentHighestPrecedenceIndex = -1;
+
+                // When looping through, it can be assumed that all odd elements
+                // are binary operators, while even ones are nodes or objects.
+                // When elements are removed and added, this system is preserved.
+                for (int i = 1; i < expressionChildrenRemaining.size(); i += 2) {
+                    int precedence = precedenceForBinaryOperator(
+                        (ASTNode) expressionChildrenRemaining.get(i)
+                    );
+
+                    if (currentHighestPrecedence < precedence) {
+                        currentHighestPrecedence = precedence;
+                        currentHighestPrecedenceIndex = i;
+                    }
+                }
+
+                CreatedObject newObject = evaluateObjectExpressionStep(
+                    expressionChildrenRemaining.get(currentHighestPrecedenceIndex - 1),
+                    (ASTNode) expressionChildrenRemaining.get(currentHighestPrecedenceIndex),
+                    expressionChildrenRemaining.get(currentHighestPrecedenceIndex + 1),
                     context
                 );
+
+                expressionChildrenRemaining.remove(currentHighestPrecedenceIndex - 1);
+                expressionChildrenRemaining.remove(currentHighestPrecedenceIndex - 1);
+                expressionChildrenRemaining.remove(currentHighestPrecedenceIndex - 1);
+                expressionChildrenRemaining.add(currentHighestPrecedenceIndex - 1, newObject);
             }
 
-            return currentValue;
+            return (CreatedObject) expressionChildrenRemaining.get(0);
         }
 
         return RuntimeContext.getGlobal("und");
     }
 
-    private static CreatedObject evaluateASTExpressionStep(
-        ASTNode term0,
+    private static CreatedObject evaluateObjectExpressionStep(
+        Object term0,
         ASTNode operatorNode,
-        ASTNode term1,
+        Object term1,
         RuntimeContext context
     ) {
+        CreatedObject term0Created;
+        CreatedObject term1Created;
+
+        if (term0 instanceof ASTNode) {
+            term0Created = evaluateASTNode((ASTNode) term0, context);
+        } else if (term0 instanceof CreatedObject) {
+            term0Created = (CreatedObject) term0;
+        } else {
+            throw new RuntimeNodeException(
+                "Term 0 was neither a node nor a created object."
+            );
+        }
+
+        if (term1 instanceof ASTNode) {
+            term1Created = evaluateASTNode((ASTNode) term1, context);
+        } else if (term1 instanceof CreatedObject) {
+            term1Created = (CreatedObject) term1;
+        } else {
+            throw new RuntimeNodeException(
+                "Term 1 was neither a node nor a created object."
+            );
+        }
+
         return evaluateExpressionStep(
-            evaluateASTNode(term0, context),
+            term0Created,
             operatorNode,
-            term1,
+            term1Created,
             context
         );
     }
+
     private static CreatedObject evaluateExpressionStep(
         CreatedObject term0,
         ASTNode operatorNode,
-        ASTNode term1,
+        CreatedObject term1,
         RuntimeContext context
     ) {
+        return term0.callMethod(
+            methodNameForBinaryOperator(operatorNode),
+            new CreatedObject[] { term1 }
+        );
+    }
+
+    private static String methodNameForBinaryOperator(ASTNode operatorNode) {
         if (operatorNode instanceof ASTGenerated_binary_operator) {
             operatorNode = operatorNode.getChild(0);
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_equality) {
-            return term0.callMethod(
-                "equals",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "equals";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_plus) {
-            return term0.callMethod(
-                "add",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "add";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_minus) {
-            return term0.callMethod(
-                "subtract",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "subtract";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_times) {
-            return term0.callMethod(
-                "multiply",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "multiply";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_divide) {
-            return term0.callMethod(
-                "divide",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "divide";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_modulo) {
-            return term0.callMethod(
-                "modulo",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "modulo";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_exponential) {
-            return term0.callMethod(
-                "exponent",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "exponent";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_and) {
-            return term0.callMethod(
-                "and",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "and";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_or) {
-            return term0.callMethod(
-                "or",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "or";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_greater_than) {
-            return term0.callMethod(
-                "isGreater",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "isGreater";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_less_than) {
-            return term0.callMethod(
-                "isLess",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "isLess";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_greater_or_equal) {
-            return term0.callMethod(
-                "isGreaterOrEqual",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "isGreaterOrEqual";
         }
 
         if (operatorNode instanceof ASTGenerated_binary_operator_less_or_equal) {
-            return term0.callMethod(
-                "isLessOrEqual",
-                new CreatedObject[] { evaluateASTNode(term1, context) }
-            );
+            return "isLessOrEqual";
+        }
+
+        throw new RuntimeNodeException("Binary operator found is unsupported.");
+    }
+
+    private static int precedenceForBinaryOperator(ASTNode operatorNode) {
+        if (operatorNode instanceof ASTGenerated_binary_operator) {
+            operatorNode = operatorNode.getChild(0);
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_equality) {
+            return 30;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_plus) {
+            return 40;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_minus) {
+            return 40;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_times) {
+            return 50;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_divide) {
+            return 50;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_modulo) {
+            return 50;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_exponential) {
+            return 60;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_and) {
+            return 20;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_or) {
+            return 10;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_greater_than) {
+            return 30;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_less_than) {
+            return 30;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_greater_or_equal) {
+            return 30;
+        }
+
+        if (operatorNode instanceof ASTGenerated_binary_operator_less_or_equal) {
+            return 30;
         }
 
         throw new RuntimeNodeException("Binary operator found is unsupported.");
