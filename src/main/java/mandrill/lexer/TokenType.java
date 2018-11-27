@@ -12,6 +12,7 @@ public enum TokenType {
     PUNCTUATOR_OPENING_ANGLE("(?<=^\\s*)<", false),
     PUNCTUATOR_CLOSING_ANGLE("(?<=^\\s*)>", false),
     PUNCTUATOR_COMMA("(?<=^\\s*),", false),
+    PUNCTUATOR_PERIOD("(?<=^\\s*)\\.", false),
     PUNCTUATOR_SEMICOLON("(?<=^\\s*);", false),
     PUNCTUATOR_COLON("(?<=^\\s*):", false),
     PUNCTUATOR_EXCLAMATION("(?<=^\\s*)!", false),

@@ -39,6 +39,7 @@ public class Parser {
                 return;
             }
         } else {
+            System.out.println(args[1]);
             parser = new Parser(
                 new ByteArrayInputStream(
                     args[1].getBytes(StandardCharsets.UTF_8)
@@ -129,7 +130,9 @@ void inside_function_action(): {} {
     variable_declaration()
 |   LOOKAHEAD(2)
     variable_assignment()
-|   function_call()
+|   LOOKAHEAD(2)
+    class_method_call() <PUNCTUATOR_SEMICOLON>
+|   function_call() <PUNCTUATOR_SEMICOLON>
 |   (statement_call() (<PUNCTUATOR_SEMICOLON>)?)
 }
 
@@ -185,7 +188,34 @@ void function_call(): {} {
     <PUNCTUATOR_OPENING_SQUARE>
     values()
     <PUNCTUATOR_CLOSING_SQUARE>
-    <PUNCTUATOR_SEMICOLON>
+}
+
+/**
+ * A class instantiation.
+ */
+void class_call(): {} {
+    type()
+    <PUNCTUATOR_OPENING_SQUARE>
+    values()
+    <PUNCTUATOR_CLOSING_SQUARE>
+}
+
+/**
+ * A class method call.
+ */
+void class_method_call(): {} {
+    normal_name()
+    <PUNCTUATOR_PERIOD>
+    function_call()
+}
+
+/**
+ * A class property getter.
+ */
+void class_property_get(): {} {
+    type()
+    <PUNCTUATOR_PERIOD>
+    normal_name_lowercased()
 }
 
 /**
@@ -348,6 +378,15 @@ void value(): {} {
 |   LOOKAHEAD(2)
     (exclamation_point())?
     literal()
+|   LOOKAHEAD(2)
+    class_method_call()
+|   LOOKAHEAD(2)
+    class_property_get()
+|   LOOKAHEAD(2)
+    (exclamation_point())?
+    function_call()
+|   LOOKAHEAD(2)
+    class_call()
 |   LOOKAHEAD(2)
     (exclamation_point())?
     normal_name()
@@ -517,6 +556,7 @@ TOKEN: {
 |   <PUNCTUATOR_OPENING_ANGLE: "[PUNCTUATOR_OPENING_ANGLE]">
 |   <PUNCTUATOR_CLOSING_ANGLE: "[PUNCTUATOR_CLOSING_ANGLE]">
 |   <PUNCTUATOR_COMMA: "[PUNCTUATOR_COMMA]">
+|   <PUNCTUATOR_PERIOD: "[PUNCTUATOR_PERIOD]">
 |   <PUNCTUATOR_SEMICOLON: "[PUNCTUATOR_SEMICOLON]">
 |   <PUNCTUATOR_COLON: "[PUNCTUATOR_COLON]">
 |   <PUNCTUATOR_EXCLAMATION: "[PUNCTUATOR_EXCLAMATION]">

@@ -37,11 +37,21 @@ public class CreatedClass<B> {
     }
 
     public CreatedObject<B> createObject() {
-        return createObject(null);
+        return createObject(new CreatedObject[0], null);
     }
 
     public CreatedObject<B> createObject(B baseValue) {
-        return new CreatedObject<B>(this, baseValue);
+        return createObject(new CreatedObject[0], baseValue);
+    }
+
+    public CreatedObject<B> createObject(CreatedObject[] arguments, B baseValue) {
+        CreatedObject<B> createdObject = new CreatedObject<B>(this, baseValue);
+
+        if (hasMethod("init")) {
+            createdObject.callMethod("init", arguments);
+        }
+
+        return createdObject;
     }
 
     public CreatedFunction<B> getMethod(String name) {

@@ -1,0 +1,10 @@
+Animal <
+    Str name = 'Rover';
+
+    getGreeting[] Str <
+        return 'Hi, ' + name + '!';
+    >
+>
+
+Animal rover = Animal[];
+echo rover.getGreeting[];

@@ -71,6 +71,24 @@ public class RuntimeNode {
             );
         }
 
+        if (node instanceof ASTGenerated_class_method_call) {
+            String objectName
+                = node.getChild(0).getChild(0).getValue();
+            String functionName
+                = node.getChild(1).getChild(0).getChild(1).getValue();
+            ASTNode[] values = node.getChild(1).getChild(1).getChildren();
+            List<CreatedObject> arguments = new LinkedList<CreatedObject>();
+
+            for (int i = 0; i < values.length; i++) {
+                arguments.add(evaluateASTNode(values[i], context));
+            }
+
+            context.getObject(objectName).callMethod(
+                functionName,
+                arguments.toArray(new CreatedObject[0])
+            );
+        }
+
         if (node instanceof ASTGenerated_echo_statement) {
             CreatedObject evaluatedObject = evaluateASTNode(
                 node.getChild(0),
@@ -253,8 +271,23 @@ public class RuntimeNode {
     public static CreatedObject runASTNodes(ASTNode[] nodes, RuntimeContext context, boolean isInFunction) {
         for (int i = 0; i < nodes.length; i++) {
             if (isInFunction) {
-                if (nodes[i] instanceof ASTGenerated_return_statement) {
-                    return evaluateASTNode(nodes[i].getChildren()[0], context);
+                ASTNode node = nodes[i];
+
+                // `nodes[i]` being an `inside_function_action` is handled
+                // automatically by `runASTNode`, but since it's not called in
+                // this one case, we must check manually.
+                if (node instanceof ASTGenerated_inside_function_action) {
+                    node = node.getChild(0);
+                }
+
+                // This might have been nested inside of the `inside_function_action`,
+                // so it has to be a separate check.
+                if (node instanceof ASTGenerated_statement_call) {
+                    node = node.getChild(0);
+                }
+
+                if (node instanceof ASTGenerated_return_statement) {
+                    return evaluateASTNode(node.getChildren()[0], context);
                 }
             }
 
@@ -345,6 +378,66 @@ public class RuntimeNode {
             return RuntimeConstants.getFltClass().createObject(
                 Double.parseDouble(node.getValue())
             );
+        }
+
+        if (node instanceof ASTGenerated_function_call) {
+            String functionName
+                = node.getChild(0).getChild(0).getValue();
+            ASTNode[] values = node.getChild(1).getChildren();
+            List<CreatedObject> arguments = new LinkedList<CreatedObject>();
+
+            for (int i = 0; i < values.length; i++) {
+                arguments.add(evaluateASTNode(values[i], context));
+            }
+
+            CreatedFunction function = context.getFunction(functionName);
+            function.call(
+                context.getOpenObject(),
+                arguments.toArray(new CreatedObject[0])
+            );
+        }
+
+        if (node instanceof ASTGenerated_class_call) {
+            String className = node.getChild(0).getChild(0).getValue();
+            ASTNode[] values = node.getChild(1).getChildren();
+            List<CreatedObject> arguments = new LinkedList<CreatedObject>();
+
+            for (int i = 0; i < values.length; i++) {
+                arguments.add(evaluateASTNode(values[i], context));
+            }
+
+            CreatedClass createdClass = RuntimeContext.getClass(className);
+            return createdClass.createObject(
+                arguments.toArray(new CreatedObject[0]),
+                null
+            );
+        }
+
+        if (node instanceof ASTGenerated_class_method_call) {
+            String objectName
+                = node.getChild(0).getChild(0).getValue();
+            String functionName
+                = node.getChild(1).getChild(0).getChild(0).getValue();
+            ASTNode[] values = node.getChild(1).getChild(1).getChildren();
+            List<CreatedObject> arguments = new LinkedList<CreatedObject>();
+
+            for (int i = 0; i < values.length; i++) {
+                arguments.add(evaluateASTNode(values[i], context));
+            }
+
+            return context.getObject(objectName).callMethod(
+                functionName,
+                arguments.toArray(new CreatedObject[0])
+            );
+        }
+
+        if (node instanceof ASTGenerated_class_property_get) {
+            String objectName
+                = node.getChild(0).getChild(0).getValue();
+            String propertyName
+                = node.getChild(1).getValue();
+
+            return context.getObject(objectName).getProperty(propertyName);
         }
 
         if (
