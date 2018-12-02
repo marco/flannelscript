@@ -3,19 +3,19 @@ options {
     MULTI = true;
     NODE_PREFIX = "ASTGenerated_";
     NODE_CLASS = "ASTNode";
-    NODE_PACKAGE = "mandrill.parser.generatednodes";
+    NODE_PACKAGE = "flannelscript.parser.generatednodes";
     DEBUG_PARSER = true;
 }
 
 PARSER_BEGIN(Parser)
-package mandrill.parser;
+package flannelscript.parser;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
-import mandrill.runtime.RuntimeNode;
+import flannelscript.runtime.RuntimeNode;
 
 /**
  * A parser that parses inputs that are created by `Lexer`, e.g.,
@@ -359,6 +359,13 @@ void echo_statement(): {} {
 }
 
 /**
+ * An `ask` statement.
+ */
+void ask_statement(): {} {
+    <KEYWORD_ASK> value()
+}
+
+/**
  * A `return` statement.
  */
 void return_statement(): {} {
@@ -385,6 +392,8 @@ void value(): {} {
 |   LOOKAHEAD(2)
     (exclamation_point())?
     function_call()
+|   LOOKAHEAD(2)
+	ask_statement()
 |   LOOKAHEAD(2)
     class_call()
 |   LOOKAHEAD(2)
@@ -541,7 +550,7 @@ SKIP: {
 
 /*
     The following tokens are all duplicates of the tokens available in
-    `mandrill.lexer.TokenType`. Some do not include, whereas others do,
+    `flannelscript.lexer.TokenType`. Some do not include, whereas others do,
     depending on the `shouldIncludeValue` value of the `TokenType`. For
     those that do, the Regular Expressions are similar to the
     `regexString` in `TokenType`.
@@ -576,6 +585,7 @@ TOKEN: {
 |   <KEYWORD_IF: "[KEYWORD_IF]">
 |   <KEYWORD_WHILE: "[KEYWORD_WHILE]">
 |   <KEYWORD_ECHO: "[KEYWORD_ECHO]">
+|   <KEYWORD_ASK: "[KEYWORD_ASK]">
 |   <KEYWORD_RETURN: "[KEYWORD_RETURN]">
 |   <IDENTIFIER_CAPITALIZED: "[IDENTIFIER_CAPITALIZED " ["A"-"Z"] (["_", "A"-"Z", "a"-"z"])* "]">
 |   <IDENTIFIER_LOWERCASED: "[IDENTIFIER_LOWERCASED " ["a"-"z"] (["_", "A"-"Z", "a"-"z"])* "]">

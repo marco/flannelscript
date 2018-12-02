@@ -1,0 +1,6 @@
+Str name = ask 'What is your name?';
+Str color = ask 'What is your favorite color?';
+
+echo '';
+echo 'Hi, ' + name + '!';
+echo color + ' is my favorite color too.';

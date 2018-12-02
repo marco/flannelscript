@@ -1,4 +1,4 @@
-package mandrill.lexer;
+package flannelscript.lexer;
 
 import java.util.regex.Pattern;
 
@@ -35,6 +35,7 @@ public enum TokenType {
     KEYWORD_IF("(?<=^\\s*)if(?=[^_A-Za-z])", false),
     KEYWORD_WHILE("(?<=^\\s*)while(?=[^_A-Za-z])", false),
     KEYWORD_ECHO("(?<=^\\s*)echo(?=[^_A-Za-z])", false),
+    KEYWORD_ASK("(?<=^\\s*)ask(?=[^_A-Za-z])", false),
     KEYWORD_RETURN("(?<=^\\s*)return(?=[^_A-Za-z])", false),
 
     IDENTIFIER_CAPITALIZED("(?<=^\\s*)[A-Z][_A-Za-z]*(?=[^_A-Za-z])", true),

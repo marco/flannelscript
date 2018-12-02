@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-find ./mandrill/parser -type f \
+find ./flannelscript/parser -type f \
     -not -name '.gitignore' \
     -not -name 'ASTNode.java' \
-    -not -name 'example.mandrill.lexed' \
+    -not -name 'example.flns.lexed' \
     -not -name 'Parser.jjt' \
     -delete
 
-find ./mandrill -type f -name '*.class' -delete
+find ./flannelscript -type f -name '*.class' -delete

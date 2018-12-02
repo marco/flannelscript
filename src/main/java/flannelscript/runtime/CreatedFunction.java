@@ -1,9 +1,9 @@
-package mandrill.runtime;
+package flannelscript.runtime;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
 
-import mandrill.parser.ASTNode;
+import flannelscript.parser.ASTNode;
 
 public class CreatedFunction<B> {
     private ParameterMap parameters;

@@ -1,12 +1,54 @@
-package mandrill.runtime;
+package flannelscript.runtime;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
-import mandrill.parser.ASTNode;
-import mandrill.parser.generatednodes.*;
+import flannelscript.parser.ASTNode;
+import flannelscript.parser.generatednodes.ASTGenerated_ask_statement;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_and;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_divide;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_equality;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_exponential;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_greater_or_equal;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_greater_than;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_less_or_equal;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_less_than;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_minus;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_modulo;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_negated_equality;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_or;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_plus;
+import flannelscript.parser.generatednodes.ASTGenerated_binary_operator_times;
+import flannelscript.parser.generatednodes.ASTGenerated_class_call;
+import flannelscript.parser.generatednodes.ASTGenerated_class_declaration;
+import flannelscript.parser.generatednodes.ASTGenerated_class_method_call;
+import flannelscript.parser.generatednodes.ASTGenerated_class_property_get;
+import flannelscript.parser.generatednodes.ASTGenerated_echo_statement;
+import flannelscript.parser.generatednodes.ASTGenerated_exclamation_point;
+import flannelscript.parser.generatednodes.ASTGenerated_expression_with_parenthesis;
+import flannelscript.parser.generatednodes.ASTGenerated_expression_without_parenthesis;
+import flannelscript.parser.generatednodes.ASTGenerated_function_call;
+import flannelscript.parser.generatednodes.ASTGenerated_function_declaration;
+import flannelscript.parser.generatednodes.ASTGenerated_if_statement;
+import flannelscript.parser.generatednodes.ASTGenerated_inside_function_action;
+import flannelscript.parser.generatednodes.ASTGenerated_literal;
+import flannelscript.parser.generatednodes.ASTGenerated_literal_boolean;
+import flannelscript.parser.generatednodes.ASTGenerated_literal_float;
+import flannelscript.parser.generatednodes.ASTGenerated_literal_int;
+import flannelscript.parser.generatednodes.ASTGenerated_literal_string;
+import flannelscript.parser.generatednodes.ASTGenerated_normal_name;
+import flannelscript.parser.generatednodes.ASTGenerated_return_statement;
+import flannelscript.parser.generatednodes.ASTGenerated_statement_call;
+import flannelscript.parser.generatednodes.ASTGenerated_value;
+import flannelscript.parser.generatednodes.ASTGenerated_value_without_expression;
+import flannelscript.parser.generatednodes.ASTGenerated_value_without_expression_without_parenthesis;
+import flannelscript.parser.generatednodes.ASTGenerated_variable_assignment;
+import flannelscript.parser.generatednodes.ASTGenerated_variable_declaration;
+import flannelscript.parser.generatednodes.ASTGenerated_while_statement;
 
 public class RuntimeNode {
     public static void runRootNode(ASTNode node) {
@@ -328,6 +370,31 @@ public class RuntimeNode {
             return evaluateASTNode(node.getChildren()[0], context);
         }
 
+        if (node instanceof ASTGenerated_ask_statement) {
+            CreatedObject evaluatedObject = evaluateASTNode(
+                node.getChild(0),
+                context
+            );
+
+            if (
+                evaluatedObject.getObjectClass()
+                    == RuntimeContext.getClass("Str")
+            ) {
+                System.out.println(evaluatedObject.getBaseValue());
+
+            } else {
+                System.out.println(
+                    evaluatedObject
+                        .callMethod("getStr", new CreatedObject[] {})
+                        .getBaseValue()
+                );
+            }
+
+            Scanner scanner = new Scanner(System.in);
+            String nextLine = scanner.nextLine();
+            return RuntimeConstants.getStrClass().createObject(nextLine);
+        }
+
         if (node instanceof ASTGenerated_literal) {
             return evaluateASTNode(node.getChildren()[0], context);
         }
@@ -391,7 +458,7 @@ public class RuntimeNode {
             }
 
             CreatedFunction function = context.getFunction(functionName);
-            function.call(
+            return function.call(
                 context.getOpenObject(),
                 arguments.toArray(new CreatedObject[0])
             );

@@ -1,9 +1,9 @@
-package mandrill.parser;
+package flannelscript.parser;
 
 import java.util.Arrays;
 
-import mandrill.parser.generatednodes.Node;
-import mandrill.parser.generatednodes.SimpleNode;
+import flannelscript.parser.generatednodes.Node;
+import flannelscript.parser.generatednodes.SimpleNode;
 
 /**
  * An abstract syntax tree node that extends from JavaCC's `SimpleNode` class.

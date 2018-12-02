@@ -1,4 +1,4 @@
-package mandrill.runtime;
+package flannelscript.runtime;
 
 public class RuntimeConstants {
     private static CreatedClass<Object> objClass;

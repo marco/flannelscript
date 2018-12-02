@@ -1,4 +1,4 @@
-package mandrill.lexer;
+package flannelscript.lexer;
 
 public class Token {
     private TokenType tokenType;

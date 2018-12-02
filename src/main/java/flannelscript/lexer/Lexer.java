@@ -1,4 +1,4 @@
-package mandrill.lexer;
+package flannelscript.lexer;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;

@@ -1,4 +1,4 @@
-package mandrill.runtime;
+package flannelscript.runtime;
 
 import java.util.LinkedHashMap;
 
