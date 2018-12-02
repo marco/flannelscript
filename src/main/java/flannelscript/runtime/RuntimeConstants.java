@@ -375,6 +375,26 @@ public class RuntimeConstants {
 
         addSelfFunctionToClass(fltClass, "getStr", fltGetStr, strClass);
 
+        // `getInt` (`Str`):
+
+        RuntimeFunction strGetInt = (RuntimeContext context) -> {
+            return intClass.createObject(
+                Long.parseLong((String) context.getOpenBaseValue())
+            );
+        };
+
+        addSelfFunctionToClass(strClass, "getInt", strGetInt, intClass);
+
+        // `getInt` (`Str`):
+
+        RuntimeFunction strGetFlt = (RuntimeContext context) -> {
+            return fltClass.createObject(
+                Double.parseDouble((String) context.getOpenBaseValue())
+            );
+        };
+
+        addSelfFunctionToClass(strClass, "getFlt", strGetFlt, fltClass);
+
         // Adding classes:
 
         RuntimeContext.setClass("Bln", blnClass);
